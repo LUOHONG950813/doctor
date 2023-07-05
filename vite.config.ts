@@ -8,7 +8,8 @@ import vue from '@vitejs/plugin-vue'
 // 配置 vant UI 组件库的解析器
 // @ts-ignore
 import Components from 'unplugin-vue-components/vite'
-// import { VantResolver } from 'unplugin-vue-components/resolvers'
+// @ts-ignore
+import { VantResolver } from 'unplugin-vue-components/resolvers'
 // import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 // import path from 'path'
 
@@ -17,7 +18,7 @@ import Components from 'unplugin-vue-components/vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    port: 80,
+    port: 8080,
     host: true
   },
   // test: {
@@ -31,11 +32,11 @@ export default defineConfig({
     //     localEnabled: true
     //   }),
     //   createHtmlPlugin(),
-    vue()
-    //   Components({
-    //     dts: false,
-    //     resolvers: [VantResolver({ importStyle: false })]
-    //   }),
+    vue(),
+    Components({
+      dts: false,
+      resolvers: [VantResolver({ importStyle: false })]
+    })
     //   createSvgIconsPlugin({
     //     iconDirs: [path.resolve(process.cwd(), 'src/icons')]
     //   })
