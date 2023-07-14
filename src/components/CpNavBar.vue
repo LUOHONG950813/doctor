@@ -2,9 +2,10 @@
 import { useRouter } from 'vue-router'
 
 // 1.通过props来设置标题和右侧文字
-defineProps<{
+const props = defineProps<{
   title?: string
   rightText?: string
+  back?: () => void
 }>()
 const emit = defineEmits<{
   (e: 'click-right'): void
@@ -16,6 +17,8 @@ const onClickRight = () => {
 // 3.左侧回退
 const router = useRouter()
 const onClickLeft = () => {
+  if (props.back) return props.back()
+
   if (history.state?.back) {
     router.back()
   } else {
