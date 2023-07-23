@@ -36,3 +36,6 @@ export const editPatient = (patient: Patient) => request('/patient/update', 'put
 
 // 删除患者信息
 export const deletePatient = (id: string) => request(`/patient/del/${id}`, 'delete')
+
+// 获取所有未读消息的数量
+export const getUnreadMessageCount = () => request<number>('/patient/message/unRead/all')

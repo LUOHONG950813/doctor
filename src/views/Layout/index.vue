@@ -1,4 +1,12 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { getUnreadMessageCount } from '@/services/user'
+const count = ref<number>()
+onMounted(async () => {
+  const res = await getUnreadMessageCount()
+  count.value = res.data
+})
+</script>
 
 <template>
   <div class="layout-page">
@@ -13,7 +21,7 @@
         >健康百科<template #icon="{ active }">
           <cp-icon :name="`home-article-${active ? 'active' : 'default'}`"> </cp-icon> </template
       ></van-tabbar-item>
-      <van-tabbar-item to="/notify"
+      <van-tabbar-item to="/notify" :badge="count || ''"
         >消息中心<template #icon="{ active }">
           <cp-icon :name="`home-notice-${active ? 'active' : 'default'}`"> </cp-icon> </template
       ></van-tabbar-item>
