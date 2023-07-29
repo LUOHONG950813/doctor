@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { IllnessTime, MsgType } from '@/enums'
-import { flagOptions, timeOptions } from '@/services/constants'
-import type { Message } from '@/types/room'
+import { MsgType, PrescriptionStatus } from '@/enums'
+import type { Message, Prescription } from '@/types/room'
 import type { Image } from '@/types/consult'
 import { showImagePreview, showToast } from 'vant'
 // @ts-ignore
 import dayjs from 'dayjs'
 import { useUserStore } from '@/stores'
+import EvaluateCard from './EvaluateCard.vue'
+import { useShowPrescription } from '@/composable'
+import { getIllnessTimeText, getConsultFlagText } from '@/utils/filter'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 defineProps<{
   item: Message
 }>()
 
-// 获取患病的时间
-const getIllnessTimeText = (time: IllnessTime) =>
-  timeOptions.find((item) => item.value === time)?.label
-// 获取是否就诊过
-const getConsultFlagText = (flag: 0 | 1) => flagOptions.find((item) => item.value === flag)?.label
 // 预览图片
 const onPreviewImage = (images?: Image[]) => {
   if (images && images.length) {
@@ -28,6 +27,21 @@ const onPreviewImage = (images?: Image[]) => {
 const formatTime = (time: string) => dayjs(time).format('HH:mm')
 
 const store = useUserStore()
+
+// 查看处方
+const { onShowPrescription } = useShowPrescription()
+
+// 购买处方
+const buy = (pre: Prescription) => {
+  if (!pre) return
+  // 无有效订单
+  if (pre.status === PrescriptionStatus.Invalid) return showToast('失效订单')
+  // 未支付，跳转支付
+  if (pre.status === PrescriptionStatus.NotPayment && !pre.orderId) {
+    return router.push(`/order/pay?id=${pre.id}`)
+  }
+  router.push(`order/${pre.orderId}`)
+}
 </script>
 
 <template>
@@ -67,11 +81,11 @@ const store = useUserStore()
     </div>
   </div>
   <!-- 通知-结束 -->
-  <!-- <div class="msg msg-tip msg-tip-cancel">
+  <div class="msg msg-tip msg-tip-cancel" v-if="item.msgType === MsgType.NotifyCancel">
     <div class="content">
-      <span>订单取消</span>
+      <span>{{ item.msg.content }}</span>
     </div>
-  </div> -->
+  </div>
   <!-- 发送文字 -->
   <div class="msg msg-to" v-if="item.msgType === MsgType.MsgText && item.from === store.user?.id">
     <div class="content">
@@ -108,29 +122,40 @@ const store = useUserStore()
     </div>
   </div>
   <!-- 处方卡片 -->
-  <!-- <div class="msg msg-recipe">
-    <div class="content">
+  <div class="msg msg-recipe" v-if="item.msgType === MsgType.CardPre">
+    <div class="content" v-if="item.msg.prescription">
       <div class="head van-hairline--bottom">
         <div class="head-tit">
           <h3>电子处方</h3>
-          <p>原始处方 <van-icon name="arrow"></van-icon></p>
+          <p @click="onShowPrescription(item.msg.prescription?.id)">
+            原始处方 <van-icon name="arrow"></van-icon>
+          </p>
         </div>
-        <p>李富贵 男 31岁 血管性头痛</p>
-        <p>开方时间：2022-01-15 14:21:42</p>
+        <p>
+          {{ item.msg.prescription.name }} {{ item.msg.prescription.genderValue }}
+          {{ item.msg.prescription.age }}岁 {{ item.msg.prescription.diagnosis }}
+        </p>
+        <p>开方时间：{{ item.msg.prescription.createTime }}</p>
       </div>
       <div class="body">
-        <div class="body-item" v-for="i in 2" :key="i">
+        <div class="body-item" v-for="i in item.msg.prescription.medicines" :key="i.id">
           <div class="durg">
-            <p>优赛明 维生素E乳</p>
-            <p>口服，每次1袋，每天3次，用药3天</p>
+            <p>{{ i.name }} {{ i.specs }}</p>
+            <p>{{ i.usageDosag }}</p>
           </div>
-          <div class="num">x1</div>
+          <div class="num">x{{ i.quantity }}</div>
         </div>
       </div>
-      <div class="foot"><span>购买药品</span></div>
+      <div class="foot"><span @click="buy(item.msg.prescription)">购买药品</span></div>
     </div>
-  </div> -->
+  </div>
   <!-- 评价卡片，后期实现 -->
+  <div
+    class="msg msg-comment"
+    v-if="item.msgType === MsgType.CardEva || item.msgType === MsgType.CardEvaForm"
+  >
+    <evaluate-card :evaluateDoc="item.msg.evaluateDoc" />
+  </div>
 </template>
 
 <style lang="scss" scoped>

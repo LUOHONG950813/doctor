@@ -3,7 +3,7 @@ import RoomStatus from './components/RoomStatus.vue'
 import RoomAction from './components/RoomAction.vue'
 import RoomMessage from './components/RoomMessage.vue'
 import io, { Socket } from 'socket.io-client'
-import { onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, nextTick, provide } from 'vue'
 import { baseURL } from '@/utils/request'
 import { useUserStore } from '@/stores'
 import { useRoute } from 'vue-router'
@@ -23,6 +23,17 @@ const loadConsult = async () => {
   const { data } = await getConsultOrderDetail(route.query.orderId as string)
   consult.value = data
 }
+// 提供问诊订单数据给后代组建
+provide('consult', consult)
+// 修改评价消息改为已评价
+const completeEva = (score: number) => {
+  const item = list.value.find((item) => item.msgType === MsgType.CardEvaForm)
+  if (item) {
+    item.msg.evaluateDoc = { score }
+    item.msgType = MsgType.CardEva
+  }
+}
+provide('completeEva', completeEva)
 const initiaMsg = ref(true)
 let socket: Socket
 onMounted(() => {
