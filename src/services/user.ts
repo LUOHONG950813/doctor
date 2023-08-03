@@ -39,3 +39,11 @@ export const deletePatient = (id: string) => request(`/patient/del/${id}`, 'dele
 
 // 获取所有未读消息的数量
 export const getUnreadMessageCount = () => request<number>('/patient/message/unRead/all')
+
+// qq登陆
+export const loginByQQ = (openId: string) =>
+  request<User>('/login/thirdparty', 'POST', { openId, source: 'qq' })
+
+// 手机号绑定
+export const bindMobile = (data: { mobile: string; code: string; openId: string }) =>
+  request<User>('/login/binding', 'POST', data)

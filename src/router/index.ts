@@ -25,6 +25,11 @@ const router = createRouter({
       meta: { title: '登录' }
     },
     {
+      path: '/login/callback',
+      component: () => import('@/views/Login/LoginCallback.vue'),
+      meta: { title: 'QQ登录-绑定手机' }
+    },
+    {
       path: '/user/patient',
       component: () => import('@/views/User/PatientPage.vue'),
       meta: { title: '家庭档案' }
@@ -123,7 +128,8 @@ router.beforeEach((to) => {
   // 获取token
   const store = useUserStore()
   // 白名单
-  const whiteList = ['/login']
+  const whiteList = ['/login', '/login/callback']
+
   // 如果没有token 且不在白名单里，重定向到登陆
   if (!store.user?.token && !whiteList.includes(to.path)) {
     return '/login'

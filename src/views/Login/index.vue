@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { mobileRules, passwordRules, codeRules } from '@/utils/rules'
-import { FormInstance, showSuccessToast, showToast } from 'vant'
-import { loginByPassword, sendMobileCode, loginByMobile } from '@/services/user'
+import { showSuccessToast, showToast } from 'vant'
+import { loginByPassword, loginByMobile } from '@/services/user'
 import { useUserStore } from '@/stores'
 import { useRouter, useRoute } from 'vue-router'
+import { useSendMobileCode } from '@/composable'
 const mobile = ref('')
 const password = ref('')
 const code = ref('')
@@ -31,27 +32,7 @@ const onSubmit = async () => {
 const isPass = ref(true)
 
 // 发送短信验证码
-const time = ref(0)
-const form = ref<FormInstance>()
-let timer: number
-const onSend = async () => {
-  // 倒计时
-  if (time.value > 0) return
-  await form.value?.validate('mobile')
-  await sendMobileCode(mobile.value, 'login')
-  showToast('发送成功')
-  time.value = 60
-  // 开启倒计时
-  if (timer) clearInterval(timer)
-  setInterval(() => {
-    time.value--
-    if (time.value <= 0) clearInterval(timer)
-  }, 1000)
-}
-
-onUnmounted(() => {
-  clearInterval(timer)
-})
+const { onSend, time, form } = useSendMobileCode(mobile)
 
 // 控制密码的可见与不可见
 const isShowPassword = ref(false)
@@ -118,67 +99,17 @@ const isShowPassword = ref(false)
     <!-- 底部 -->
     <div class="login-other">
       <van-divider>第三方登录</van-divider>
-      <div class="icon">
+      <a
+        class="icon"
+        @click="store.setReturnUrl(route.query.returnUrl as string)"
+        href="https://graph.qq.com/oauth2.0/authorize?client_id=102015968&response_type=token&scope=all&redirect_uri=http%3A%2F%2Fconsult-patients.itheima.net%2Flogin%2Fcallback"
+      >
         <img src="@/assets/qq.svg" alt="" />
-      </div>
+      </a>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.login {
-  &-page {
-    padding-top: 46px;
-  }
-  &-head {
-    display: flex;
-    padding: 30px 30px 50px;
-    justify-content: space-between;
-    align-items: flex-end;
-    line-height: 1;
-    h3 {
-      font-weight: normal;
-      font-size: 24px;
-    }
-    a {
-      font-size: 15px;
-    }
-  }
-  &-other {
-    margin-top: 60px;
-    padding: 0 30px;
-    .icon {
-      display: flex;
-      justify-content: center;
-      img {
-        width: 36px;
-        height: 36px;
-        padding: 4px;
-      }
-    }
-  }
-}
-.van-form {
-  padding: 0 14px;
-  .cp-cell {
-    height: 52px;
-    line-height: 24px;
-    padding: 14px 16px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    .van-checkbox {
-      a {
-        color: var(--cp-primary);
-        padding: 0 5px;
-      }
-    }
-  }
-  .btn-send {
-    color: var(--cp-primary);
-    &.active {
-      color: rgba(22, 194, 163, 0.5);
-    }
-  }
-}
+@import '@/styles/login.scss';
 </style>

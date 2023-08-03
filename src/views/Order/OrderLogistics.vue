@@ -6,6 +6,9 @@ import { useRoute } from 'vue-router'
 import AMapLoader from '@amap/amap-jsapi-loader'
 const logistics = ref<Logistics>()
 const route = useRoute()
+import startImg from '@/assets/start.png'
+import endImg from '@/assets/end.png'
+import carImg from '@/assets/car.png'
 onMounted(async () => {
   // 获取物流信息
   const res = await getMedicalOrderLogistics(route.params.id as string)
@@ -25,6 +28,60 @@ const initMap = () => {
     const map = new AMap.Map('map', {
       mapStyle: 'amap://styles/whitesmoke',
       zoom: 12
+    })
+    AMap.plugin('AMap.Driving', function () {
+      const driving = new AMap.Driving({
+        map: map,
+        showTraffic: false,
+        hideMarkers: true
+      })
+
+      if (logistics.value?.logisticsInfo && logistics.value.logisticsInfo.length >= 2) {
+        const list = [...logistics.value.logisticsInfo]
+
+        // 创建标记函数
+        const getMarker = (point: Location, image: string, width = 25, height = 30) => {
+          const icon = new AMap.Icon({
+            size: new AMap.Size(width, height),
+            image,
+            imageSize: new AMap.Size(width, height)
+          })
+          const marker = new AMap.Marker({
+            position: [point?.longitude, point?.latitude],
+            icon: icon,
+            offset: new AMap.Pixel(-width / 2, -height)
+          })
+          return marker
+        }
+        // 起点
+        const start = list.shift()
+        // 起点标记
+        const startMarker = getMarker(start!, startImg)
+        map.add(startMarker)
+        // 终点
+        const end = list.pop()
+        // 终点标记
+        const endMarker = getMarker(end!, endImg)
+        map.add(endMarker)
+
+        driving.search(
+          [start?.longitude, start?.latitude],
+          [end?.longitude, end?.latitude],
+          { waypoints: list.map((item) => [item.longitude, item.latitude]) },
+          () => {
+            // 规划完毕
+            // 运输位置
+            const curr = logistics.value?.currentLocationInfo
+            const currMarker = getMarker(curr!, carImg, 33, 20)
+            map.add(currMarker)
+            // 3s后定位当中间进行缩放
+            setTimeout(() => {
+              map.setFitView([currMarker])
+              map.setZoom(10)
+            }, 3000)
+          }
+        )
+      }
     })
   })
 }
